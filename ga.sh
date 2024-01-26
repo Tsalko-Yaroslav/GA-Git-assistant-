@@ -4,7 +4,8 @@
 #rm -rf .git
 
 
-OPTMESSAGE=""
+LOG_MESSAGE=("${GREEN}$(date +"%D %T" ):${NC} ga started")
+LOG_ID=0
 NC='\033[0m'
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -32,7 +33,19 @@ echo -e "${GREEN}WELCOME TO:'
 echo -e "${NC}"
 read -p  "Press any key to continue> "
 
-
+function print_optmessage() {
+    clear
+    for (( i=LOG_ID; i>=0; i-- )); do
+         echo -e "${LOG_MESSAGE[$i]}"
+         echo
+    done
+    read -p "Hit enter to come back!"
+    git_operations
+}
+function log_message_form {
+    ((LOG_ID++))
+    LOG_MESSAGE[$LOG_ID]="${GREEN}$(date +"%D %T" ):${NC} $1"
+}
 function select_option {
 
     # little helpers for terminal print control and key input
@@ -72,7 +85,12 @@ function select_option {
             fi
             ((idx++))
         done
-        print_optmessage
+        echo
+        echo
+        echo
+        echo
+        echo
+        echo -e "${LOG_MESSAGE[$LOG_ID]}"
         # user key control
         case `key_input` in
             enter) break;;
@@ -247,7 +265,7 @@ function gitinit() {
                         if git remote add $remoname $remolink &> /dev/null; then
                             git pull
                             echo "Pulled origin"
-                            echo "${DONE}"
+                            echo -e "${DONE}"
                             read -p "Press any key to move forward> "
                             git_operations
                         else
@@ -292,13 +310,13 @@ function git_operations() {
     do
         echo "Select one option using up/down keys and enter to confirm:"
         echo
-
         options=(
         "add                    Add file contents to the index"
         "commit                 Commit changes"
         "push                   Update remote refs along with associated objects"
         "pull                   Fetch from and integrate with another repository or a local branch"
         "checkout               Change/create branch"
+        "logs"
         "quit"
         )
 
@@ -328,6 +346,10 @@ function git_operations() {
                 continue
                 ;;
             5)
+                print_optmessage
+                continue
+                ;;
+            6)
                 break
                 ;;
         esac
@@ -351,11 +373,7 @@ function git_add() {
     choice=$?
     case $choice in
         0)
-            if git add . &> /dev/null; then
-                OPTMESSAGE="===${GREEN}Added files successfuly!${NC}==="
-            else
-                OPTMESSAGE="${RED}Something went wrong!${NC}"
-            fi
+            log_message_form "$(git add .)"
 
             ;;
         1)
@@ -372,8 +390,9 @@ function git_add() {
                 ((idx++))
             done
             #sleep 1000
-            OPTMESSAGE="${git_add_array[@]}"
-            git add "${git_add_array[@]}"
+            
+            log_message_form "$(git add "${git_add_array[@]}")"
+            
             #sleep 1000
             #if git add $git_add_array[@] &> /dev/null; then
             #    OPTMESSAGE="===${GREEN}Added files successfuly!${NC}===\n${git_add_array[@]}"
@@ -390,13 +409,14 @@ function git_add() {
 function git_commit() {
     clear
     read -p "Provide commit message: " commit_message
-    git commit -m $commit_message
     #sleep 1000
-    if git commit -m $commit_message &> /dev/null; then
-            OPTMESSAGE="===${GREEN}Commited files successfuly!${NC}==="
+    if [ -ne "$commit_message" ]; then
+        log_message_form "${RED}Empty commit message! Try again${NC}"
     else
-            OPTMESSAGE="${RED}Something went wrong!${NC}"
+        log_message_form "$(git commit -m "$commit_message")"
+
     fi
+    clear
 }
 function git_push() {
     clear
@@ -406,20 +426,9 @@ function git_push() {
     select_option "${branch_options[@]}"
     choice=$?
     echo "$choise"
-    git push -u $( git remote ) "${branch_options[$choice]}"
+    log_message_form "$(git push -u $( git remote ) "${branch_options[$choice]}")"
     #sleep 1000
+    clear
 }
 #===========================================================================================
-function print_optmessage() {
-    echo
-    echo
-    echo
-    echo
-    echo
-    echo
-    echo -e "${OPTMESSAGE}"
-
-}
-
-
 start
