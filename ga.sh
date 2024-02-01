@@ -214,6 +214,7 @@ function multiselect {
                         
                     
                     fi;;
+            #escape) git_operations;;
         esac
     done
 
@@ -360,8 +361,7 @@ function git_operations() {
         echo "        value = ${options[$choice]}"
         case "$choice" in
             0)
-                echo "status"
-                
+                git_status
                 ;;
             1)
                 git_add
@@ -439,7 +439,13 @@ function git_operations() {
 
 }
 
-
+function git_status() {
+    clear
+    git status
+    echo
+    read -p "Press any key to continue>"
+    git_operations
+}
 
 function git_add() {
     clear
@@ -454,7 +460,7 @@ function git_add() {
     case $choice in
         0)
             git add .
-            log_message_form "Files added:\n${CYAN}${FILES_ARRAY[*]}${NC}"
+            log_message_form "All files added!"
 
             ;;
         1)
@@ -482,13 +488,17 @@ function git_add() {
 }
 function git_commit() {
     clear
-    read -p "Provide commit message: " commit_message
-    #sleep 1000
-    if [ -ne "$commit_message" ]; then
-        log_message_form "${RED}Empty commit message! Try again${NC}"
-    else
-        log_message_form "$(git commit -m "$commit_message")"
+    if [[ $(git status) =~ "Changes to be committed:" ]]; then
+        read -p "Provide commit message: " commit_message
+        #sleep 1000
+        if [ -ne "$commit_message" ]; then
+            log_message_form "${RED}Empty commit message! Try again${NC}"
+        else
+            log_message_form "$(git commit -m "$commit_message")"
 
+        fi
+    else
+        log_message_form "${RED}There is nothing to commit! Add files first!${NC}"
     fi
     clear
 }
