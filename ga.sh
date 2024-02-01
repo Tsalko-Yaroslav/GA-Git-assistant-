@@ -6,9 +6,13 @@
 
 LOG_MESSAGE=("${GREEN}$(date +"%D %T" ):${NC} ga started")
 LOG_ID=0
+FILES_ARRAY=()
+LINE_MESS=()
+
 NC='\033[0m'
 GREEN='\033[0;32m'
 RED='\033[0;31m'
+CYAN='\033[1;36m'
 DONE="${GREEN}
 
 ================================
@@ -32,6 +36,15 @@ echo -e "${GREEN}WELCOME TO:'
 "
 echo -e "${NC}"
 read -p  "Press any key to continue> "
+function make_dir_arr {
+    local ind=0
+    for ent in ${FILES_ARRAY[@]}; do
+        if [ -d $ent ]; then
+            ${FILESS_ARRAY_DIRS[ind]}=$ent
+            ((ind++))
+        fi
+    done
+}
 
 function print_optmessage() {
     clear
@@ -110,6 +123,7 @@ function select_option {
 }
 
 function multiselect {
+    echo "[SPACE] - to select [ENTER - to continue]"
     # little helpers for terminal print control and key input
     ESC=$( printf "\033")
     cursor_blink_on()   { printf "$ESC[?25h"; }
@@ -172,7 +186,6 @@ function multiselect {
             if [[ ${selected[idx]} == true ]]; then
               prefix="[${GREEN}+${NC}]"
             fi
-
             cursor_to $(($startrow + $idx))
             if [ $idx -eq $1 ]; then
                 print_active "$option" "$prefix"
@@ -192,9 +205,15 @@ function multiselect {
             space)  toggle_option $active;;
             enter)  print_options -1; break;;
             up)     ((active--));
-                    if [ $active -lt 0 ]; then active=$((${#options[@]} - 1)); fi;;
+                    if [ $active -lt 0 ]; then active=$((${#options[@]} - 1)); 
+                        
+                    
+                    fi;;
             down)   ((active++));
-                    if [ $active -ge ${#options[@]} ]; then active=0; fi;;
+                    if [ $active -ge ${#options[@]} ]; then active=0; 
+                        
+                    
+                    fi;;
         esac
     done
 
@@ -308,14 +327,28 @@ function git_operations() {
 
     while true;
     do
+        FILES_ARRAY=( $( ls *) )
+        
+        
         echo "Select one option using up/down keys and enter to confirm:"
         echo
         options=(
-        "add                    Add file contents to the index"
-        "commit                 Commit changes"
+        "status                 show modified files in working directory, staged for your next commit"
+        "add                    add a file as it looks now to your next commit (stage)"
+        "commit                 commit your staged content as a new commit snapshot"
+        "reset stage            unstage a file while retaining the changes in working directory"
+        "diff                   diff between of what is changed but not staged"
+        "staged diff            diff between of what is staged but not yet commi"
+        "commits history"
+        "branches list          list your branches. a * will appear next to the currently active branch"
+        "create branch          create a new branch at the current commit"
+        "change branch"
+        "stash                  save modified and staged changes"
+        "stash list             list stack-order of stashed file changes"
+        "pop stash              write working from top of stash stack"
+        "drop stash             discard the changes from top of stash stack"
         "push                   Update remote refs along with associated objects"
         "pull                   Fetch from and integrate with another repository or a local branch"
-        "checkout               Change/create branch"
         "logs"
         "quit"
         )
@@ -326,30 +359,77 @@ function git_operations() {
         echo "Choosen index = $choice"
         echo "        value = ${options[$choice]}"
         case "$choice" in
-
             0)
-                git_add
-                continue
+                echo "status"
+                
                 ;;
             1)
-                git_commit
-                continue
+                git_add
+                
                 ;;
             2)
+                git_commit
+                
+                ;;
+            3)
+                echo "reset stage"
+                
+                ;;
+            4)
+                echo "diff"
+                
+                ;;
+            5)
+                echo "staged diff"
+                
+                ;;
+            6)
+                echo "commits history"
+
+                ;;
+            7)
+                echo "branches list"
+                
+                ;;
+            8)
+                echo "create branch"
+                
+                ;;
+            9)
+                echo "change branch"
+
+                ;;
+            10)
+                echo "stach"
+                
+                ;;
+            11)
+                echo "stash list"
+                
+                ;;
+            12)
+                echo "pop stash"
+                
+                ;;
+            13)
+                echo "drop stash"
+                
+                ;;
+            14)
                 git_push
                 continue
                 ;;
-            3)
+            15)
                 continue
                 ;;
-            4)
+            16)
                 continue
                 ;;
-            5)
+            17)
                 print_optmessage
                 continue
                 ;;
-            6)
+            18)
                 break
                 ;;
         esac
@@ -373,12 +453,13 @@ function git_add() {
     choice=$?
     case $choice in
         0)
-            log_message_form "$(git add .)"
+            git add .
+            log_message_form "Files added:\n${CYAN}${FILES_ARRAY[*]}${NC}"
 
             ;;
         1)
             clear
-            local my_options=($( ls * ) )
+            local my_options=(${FILES_ARRAY[@]})
             local git_add_array=()
             multiselect result my_options
 
@@ -390,17 +471,10 @@ function git_add() {
                 ((idx++))
             done
             #sleep 1000
-            
-            log_message_form "$(git add "${git_add_array[@]}")"
-            
-            #sleep 1000
-            #if git add $git_add_array[@] &> /dev/null; then
-            #    OPTMESSAGE="===${GREEN}Added files successfuly!${NC}===\n${git_add_array[@]}"
-            #else
-            #    OPTMESSAGE="${RED}Something went wrong!${NC}${git_add_array[@]}"
-            #fi
-            ;;
-        2)
+            git add "${git_add_array[@]}"
+            log_message_form "Files added:\n${CYAN}${git_add_array[*]}${NC}"        
+               ;;
+        *)
             git_operations
             ;;
     esac
