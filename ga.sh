@@ -8,7 +8,7 @@ LOG_MESSAGE=("${GREEN}$(date +"%D %T" ):${NC} ga started")
 LOG_ID=0
 FILES_ARRAY=()
 LINE_MESS=()
-
+PRESENT_BRANCH=""
 NC='\033[0m'
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -322,10 +322,16 @@ function gitinit() {
         esac
     done
 }
-
+function present_branch() {
+    PRESENT_BRANCH=$(git branch | awk '/\* /')
+}
 function git_operations() {
     clear
-
+    present_branch
+    echo 
+    echo -e "${CYAN}--> Current branch:${GREEN} $PRESENT_BRANCH${NC}"
+    echo 
+    
     while true;
     do
         FILES_ARRAY=( $( ls *) )
