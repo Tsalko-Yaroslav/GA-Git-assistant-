@@ -1,2 +1,2 @@
 # GA-Git-assistant
-##Project for university
+## Project for university
