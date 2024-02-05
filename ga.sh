@@ -378,8 +378,8 @@ function git_operations() {
                 
                 ;;
             3)
-                echo "reset stage"
-                
+                #echo "reset stage"
+                git_reset_stage
                 ;;
             4)
                 echo "diff"
@@ -508,6 +508,62 @@ function git_commit() {
     fi
     clear
 }
+function git_reset_stage() {
+    clear
+    if [[ $(git status) =~ "Changes to be committed:" ]]; then
+        local git_reset_options=(
+        "Reset all"
+        "Reset separately"
+        "back"
+        )
+        
+        select_option "${git_reset_options[@]}"
+        choice=$?
+        case $choice in
+            0)
+                git reset .
+                log_message_form "All files are reseted!"
+
+                ;;
+            1)
+                clear
+                local staged_array=()
+                while IFS="" read -r staged_file ; do
+                    #if [[ staged_array~="error:" ]]; then
+                    #    continue
+                    #else
+                        staged_array+=("$staged_file")
+                    #fi
+                done < <(git diff --name-only --cached)
+                #echo ${staged_array[@]}
+                #sleep 1000
+                local my_options=(${staged_array[@]})
+                local git_reset_array=()
+                multiselect result my_options
+
+                local idx=0
+                for option in "${my_options[@]}"; do
+                    if [ ${result[idx]} == "true" ]; then
+                        git_reset_array[idx]=$option
+                        
+                    fi
+                    ((idx++))
+                done
+                #echo ${git_reset_array[@]}
+                #sleep 1000
+                git reset "${git_reset_array[@]}"
+                log_message_form "Files reseted:\n${CYAN}${git_reset_array[*]}${NC}"        
+                ;;
+            *)
+                git_operations
+                ;;
+        esac
+    else
+        log_message_form "${RED}There is nothing to unstage!${NC}"
+        git_operations
+    fi
+    clear
+}
 function git_push() {
     clear
     local branch_options=(
@@ -518,6 +574,7 @@ function git_push() {
     echo "$choise"
     log_message_form "$(git push -u $( git remote ) "${branch_options[$choice]}")"
     #sleep 1000
+    
     clear
 }
 #===========================================================================================
