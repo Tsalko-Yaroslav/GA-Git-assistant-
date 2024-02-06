@@ -344,16 +344,16 @@ function git_operations() {
         "add                    add a file as it looks now to your next commit (stage)"
         "commit                 commit your staged content as a new commit snapshot"
         "reset stage            unstage a file while retaining the changes in working directory"
-        "diff                   diff between of what is changed but not staged"
-        "staged diff            diff between of what is staged but not yet commi"
         "commits history"
         "branches list          list your branches. a * will appear next to the currently active branch"
         "create branch          create a new branch at the current commit"
         "change branch"
+        "merge                  merge the specified branch\’s history into the current one"
         "stash                  save modified and staged changes"
         "stash list             list stack-order of stashed file changes"
         "pop stash              write working from top of stash stack"
         "drop stash             discard the changes from top of stash stack"
+        "add remote"
         "push                   Update remote refs along with associated objects"
         "pull                   Fetch from and integrate with another repository or a local branch"
         "logs"
@@ -382,61 +382,62 @@ function git_operations() {
                 git_reset_stage
                 ;;
             4)
-                echo "diff"
-                
+                #echo "commits history"
+                git_log
                 ;;
             5)
-                echo "staged diff"
-                
+                #echo "branches list"
+                git_branch
                 ;;
             6)
-                echo "commits history"
-
+                #echo "create branch"
+                git_checkout_b
                 ;;
             7)
-                echo "branches list"
-                
+                #echo "change branch"
+                git_change_branch
                 ;;
             8)
-                echo "create branch"
+                #echo "git merge"
                 
                 ;;
             9)
-                echo "change branch"
-
+                #echo "stach"
+                git_stash
                 ;;
             10)
-                echo "stach"
                 
+                #echo "stash list"
+                git_stash_list
                 ;;
             11)
-                echo "stash list"
                 
+                #echo "pop stash"
+                git_stash_pop
                 ;;
             12)
-                echo "pop stash"
+                #echo "drop stash"
+                git_stash_drop
                 
                 ;;
             13)
-                echo "drop stash"
+                git_remote_add
                 
                 ;;
             14)
                 git_push
-                continue
+                
                 ;;
             15)
-                continue
+                git_pull
+                
                 ;;
             16)
-                continue
-                ;;
-            17)
                 print_optmessage
-                continue
+                
                 ;;
-            18)
-                break
+            *)
+                kill $$
                 ;;
         esac
 
@@ -449,10 +450,10 @@ function git_status() {
     clear
     git status
     echo
+    echo
     read -p "Press any key to continue>"
     git_operations
 }
-
 function git_add() {
     clear
     local git_add_options=(
@@ -564,18 +565,133 @@ function git_reset_stage() {
     fi
     clear
 }
+function git_log() {
+    clear
+    git log
+    echo
+    read -p "Press any key to continue>"
+    git_operations
+}
+function git_branch() {
+    clear
+    git branch
+    read -p "Press any key to continue>"
+    git_operations
+
+}
+function git_checkout_b() {
+    clear
+  
+        read -p "Provide branch name: " branch_name
+        #sleep 1000
+        if [ -ne "$branch_name" ]; then
+            log_message_form "${RED}Empty branch name! Try again!${NC}"
+        else
+            git checkout -b $branch_name
+            log_message_form "Succesfuly created branch: $branch_name"
+
+        fi
+    git_operations
+
+}
+function git_change_branch() {
+     clear
+   
+        local git_branch_options=()
+        while IFS=" " read -r branch ; do
+                   
+            git_branch_options+=("$branch")
+                   
+        done < <(git branch)
+        select_option "${git_branch_options[@]}"
+        choice=$?
+        git checkout ${git_branch_options[$choice]}
+        log_message_form "Succesfuly changed current branch to: ${git_branch_options[$choice]}"
+
+    git_operations
+}
+function git_merge() {
+    clear
+
+}
+function git_stash() {
+    clear
+    if [[ $(git status) =~ "Changes to be committed:" ]]; then
+        log_message_form "$(git stash)"
+        
+    else
+        log_message_form "${RED}There is nothing to stash! Add files first!${NC}"
+    fi
+    git_operations
+}
+function git_stash_list() {
+    clear
+    git stash list
+    read -p "Press any key to continue>"
+    git_operations
+}
+function git_stash_pop() {
+    clear
+    log_message_form "$(git stash pop)"
+    git_operations
+}
+function git_stash_drop() {
+    clear
+    log_message_form "$(git stash drop)"
+    git_operations
+}
+function git_remote_add() {
+    while true;
+    do
+    clear
+    
+        echo "Write name for remote repo, and paste link, example: <origin git@github.com:...> "
+        read -p "> " remoname remolink            
+        if [ -z "$remoname" ]; then
+            echo -e "${RED} ERROR! There is no remote repo name!${NC}"
+            continue          
+        elif [ -z "$remolink" ]; then
+            echo -e "${RED} ERROR! There is no remote repo url!${NC}"
+            continue      
+        else    
+            break
+            log_message_form "$(git remote add $remoname $remolink)"
+            git_operations
+        fi       
+    done
+    git_operations
+}
 function git_push() {
     clear
-    local branch_options=(
-        $( git branch -a )
-    )
-    select_option "${branch_options[@]}"
-    choice=$?
-    echo "$choise"
-    log_message_form "$(git push -u $( git remote ) "${branch_options[$choice]}")"
-    #sleep 1000
-    
-    clear
+        echo "Select remote:"
+        local git_remote_options=()
+        while IFS=" " read -r remote ; do
+                   
+            git_remote_options+=("$remote")
+                   
+        done < <(git remote)
+        select_option "${git_remote_options[@]}"
+        choice=$?
+        #log_message_form "${git_remote_options[$choice]} ${PRESENT_BRANCH//\*}"
+        log_message_form "$(git push -u ${git_remote_options[$choise]} ${PRESENT_BRANCH//\*})"
+
+    git_operations
+}
+function git_pull() {
+     clear
+        echo "Select remote:"
+        local git_remote_options=()
+        while IFS=" " read -r remote ; do
+                   
+            git_remote_options+=("$remote")
+                   
+        done < <(git remote)
+        select_option "${git_remote_options[@]}"
+        choice=$?
+        #log_message_form "${git_remote_options[$choice]} ${PRESENT_BRANCH//\*}"
+        log_message_form "$(git pull ${git_remote_options[$choise]} ${PRESENT_BRANCH//\*})"
+
+    git_operations
 }
 #===========================================================================================
 start
