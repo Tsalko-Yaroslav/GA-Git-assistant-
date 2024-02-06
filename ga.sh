@@ -399,7 +399,7 @@ function git_operations() {
                 ;;
             8)
                 #echo "git merge"
-                
+                git_merge
                 ;;
             9)
                 #echo "stach"
@@ -612,7 +612,22 @@ function git_change_branch() {
 }
 function git_merge() {
     clear
-
+    #echo "Select which branch you want to merge in $PRESENT_BRANCH"
+    local git_branch_options=()
+    while IFS=" " read -r branch ; do
+        if [[ $branch == $PRESENT_BRANCH ]]; then
+            continue
+            #echo $git_branch_options
+        fi   
+        git_branch_options+=("$branch")
+                   
+    done < <(git branch)
+    
+    select_option "${git_branch_options[@]}"
+    choice=$?
+    #log_message_form "(${git_branch_options[$choice]})" 
+    log_message_form "$( git merge ${git_branch_options[$choice]} )" 
+    git_operations
 }
 function git_stash() {
     clear
