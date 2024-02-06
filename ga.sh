@@ -348,6 +348,7 @@ function git_operations() {
         "branches list          list your branches. a * will appear next to the currently active branch"
         "create branch          create a new branch at the current commit"
         "change branch"
+        "delete branch"
         "merge                  merge the specified branch\’s history into the current one"
         "stash                  save modified and staged changes"
         "stash list             list stack-order of stashed file changes"
@@ -398,41 +399,45 @@ function git_operations() {
                 git_change_branch
                 ;;
             8)
+                #echo "git delete branch"
+                git_delete_branch
+                ;;
+            9)
                 #echo "git merge"
                 git_merge
                 ;;
-            9)
+            10)
                 #echo "stach"
                 git_stash
                 ;;
-            10)
+            11)
                 
                 #echo "stash list"
                 git_stash_list
                 ;;
-            11)
+            12)
                 
                 #echo "pop stash"
                 git_stash_pop
                 ;;
-            12)
+            13)
                 #echo "drop stash"
                 git_stash_drop
                 
                 ;;
-            13)
+            14)
                 git_remote_add
                 
                 ;;
-            14)
+            15)
                 git_push
                 
                 ;;
-            15)
+            16)
                 git_pull
                 
                 ;;
-            16)
+            17)
                 print_optmessage
                 
                 ;;
@@ -608,6 +613,24 @@ function git_change_branch() {
         git checkout ${git_branch_options[$choice]}
         log_message_form "Succesfuly changed current branch to: ${git_branch_options[$choice]}"
 
+    git_operations
+}
+function git_delete_branch() {
+ clear
+    echo "Select which branch you want to delete(current choosen branch wont be displayed)"
+    local git_branch_options=()
+    while IFS=" " read -r branch ; do
+        if [[ $branch == $PRESENT_BRANCH ]]; then
+            continue
+            #echo $git_branch_options
+        fi   
+        git_branch_options+=("$branch")
+                   
+    done < <(git branch)
+    
+    select_option "${git_branch_options[@]}"
+    choice=$?
+    log_message_form "$(git branch -d ${git_branch_options[$choise]})"
     git_operations
 }
 function git_merge() {
